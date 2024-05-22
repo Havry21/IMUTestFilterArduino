@@ -13,7 +13,7 @@ ICM20948_WE myIMU = ICM20948_WE(ICM20948_ADDR);
 bool dir = false;
 double V = 0;
 uint64_t timer = 0;
-const FilterType type = KALMAN;
+const FilterType type = EXPONENT_SMOOTH;
 
 void imuSetup(ICM20948_WE& imu)
 {
@@ -119,7 +119,7 @@ void loop()
             break;
 
         case AVRG:
-            filteredValue = getAvrg(gVal.y);
+            filteredValue = getAvrg(gVal.y,10);
             break;
 
         case MEDIAN:
@@ -139,10 +139,10 @@ void loop()
     V += filteredValue * dt * 9.8 / 1000;
     distance += V * dt / 1000000;
 
-    static int targetDist = 1000;
+    static int targetDist = 3000;
 
     // модель скорости в форме синуса, период которого равен полной длинне заданаго пути
-    double distToRad = 2 * PI * abs(distance / targetDist);
+    double distToRad =  PI * abs(distance / targetDist);
     uint8_t speed = sin(distToRad) * 150 + 100;
 
     if (! dir)
@@ -159,7 +159,7 @@ void loop()
     }
     else
     {
-        if (abs(distance) > targetDist * 0.1)
+        if (abs(distance) > targetDist * 0.01)
         {
             digitalWrite(7, HIGH);
             digitalWrite(4, HIGH);

@@ -36,22 +36,14 @@ T getMedian(T value)
 {
     static uint8_t counter = 0;
     const uint8_t measure = 3;
-    static float val[3] {0};
-    static T filteredValue = value;
-    if (counter != measure)
-    {
-        counter++;
-        val[counter] = value;
-        return value;
-    }
-    else
-    {
-        counter = 0;
-        filteredValue = val[0] > val[1]
-                            ? (val[1] > val[2] ? val[1] : (val[0] < val[2] ? val[0] : val[2]))
-                            : (val[1] < val[2] ? val[1] : (val[0] < val[2] ? val[2] : val[0]));
-    }
-    return filteredValue;
+    static T val[3];
+
+    counter != measure ? counter++ : counter=0; 
+
+    val[counter] = value;
+    return val[0] > val[1]
+               ? (val[1] > val[2] ? val[1] : (val[0] < val[2] ? val[0] : val[2]))
+               : (val[1] < val[2] ? val[1] : (val[0] < val[2] ? val[2] : val[0]));
 }
 
 template <typename T>
