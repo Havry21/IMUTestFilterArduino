@@ -21,7 +21,6 @@ T getAvrg(T value, uint16_t sample = 100)
     {
         counter++;
         preValue += value;
-        return value;
     }
     else
     {
