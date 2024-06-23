@@ -7,7 +7,8 @@
 
 #define ICM20948_ADDR 0x68
 
-KalmanFilter kalmanX(0.5, 0.5, 0, 0);
+KalmanFilter kalmanX;
+
 ICM20948_WE myIMU = ICM20948_WE(ICM20948_ADDR);
 
 bool dir = false;
@@ -73,10 +74,8 @@ void resetValue()
     delay(1000);
     digitalWrite(13, LOW);
     dir = ! dir;
+    kalmanX.reset();
     V = 0;
-    kalmanX.K = 0;
-    kalmanX.P = 0;
-    kalmanX.x = 0;
     delay(500);
     timer = micros();
 }
@@ -108,6 +107,18 @@ void loop()
     myIMU.readSensor();
     xyzFloat gVal = myIMU.getGValues();
 
+    auto dt = micros() - timer;
+    timer = micros();
+
+    V += filteredValue * dt * 9.8 / 1000;
+    distance += V * dt / 1000000;
+
+    static int targetDist = 3000;
+
+    // модель скорости в форме синуса, период которого равен полной длинне заданаго пути
+    double distToRad = PI * abs(distance / targetDist);
+    uint8_t speed = sin(distToRad) * 150 + 100;
+
     switch (type)
     {
         case NONE:
@@ -115,11 +126,11 @@ void loop()
             break;
 
         case KALMAN:
-            filteredValue = kalmanX.filter(gVal.y);
+            filteredValue = kalmanX.filter(gVal.y, speed - 100, dt);
             break;
 
         case AVRG:
-            filteredValue = getAvrg(gVal.y,10);
+            filteredValue = getAvrg(gVal.y, 10);
             break;
 
         case MEDIAN:
@@ -133,17 +144,6 @@ void loop()
         default:
             break;
     }
-
-    auto dt = micros() - timer;
-    timer = micros();
-    V += filteredValue * dt * 9.8 / 1000;
-    distance += V * dt / 1000000;
-
-    static int targetDist = 3000;
-
-    // модель скорости в форме синуса, период которого равен полной длинне заданаго пути
-    double distToRad =  PI * abs(distance / targetDist);
-    uint8_t speed = sin(distToRad) * 150 + 100;
 
     if (! dir)
     {
@@ -183,9 +183,6 @@ void loop()
 
         Serial.print("\tDist - ");
         Serial.print(distance);
-
-        Serial.print("\tK - ");
-        Serial.println(kalmanX.K);
 
         timeForPrint = millis();
     }

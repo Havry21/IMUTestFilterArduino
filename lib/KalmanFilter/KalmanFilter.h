@@ -1,31 +1,37 @@
 #pragma once
+#include "BasicLinearAlgebra.h"
+using namespace BLA;
 
 class KalmanFilter
 {
 private:
-    double Q; // Process noise covariance
-    double R; // Measurement noise
-    // covariance
+    double Kp = 0.5;
+    double Kd = 0.5;
+    double Kspeed = 1;
+    Matrix<3, 1, double> x = {0, 0, 0};
+    Matrix<3, 1, double> B = {0, 0, 1};
+    Matrix<3, 3, double> P = Zeros<3, 3, double>();
+
+    Matrix<3, 3, double> F;
+    Matrix<1, 1, double> y;
+    Matrix<1, 1, double> z;
+    Matrix<3, 1, double> K;
+
+    const Matrix<1, 3, double> H = {0, 0, 1};
+
+    const Matrix<3, 3, double> I = {1, 0, 0,
+                                    0, 1, 0,
+                                    0, 0, 1};
+
+    const Matrix<3, 3, double> Q = {2, 3, 3,
+                                    3, 1, 1,
+                                    3, 1, 1};
+    const Matrix<1, 1, double> R = {1};
 
 public:
-    double x; // Estimated value
-    double P; // Estimated error
-    double K = 0;
-    KalmanFilter(double processNoise, double measurementNoise,
-                 double initialValue, double initialError)
-    {
-        Q = processNoise;
-        R = measurementNoise;
-        x = initialValue;
-        P = initialError;
-    }
-    double filter(double measurement)
-    { // Prediction update
-        double x_pred = x;
-        double P_pred = P + Q; // Measurement update
-        K = P_pred / (P_pred + R);
-        x = x_pred + K * (measurement - x_pred);
-        P = (1 - K) * P_pred;
-        return x;
-    }
+    KalmanFilter() = default;
+    ~KalmanFilter() = default;
+
+    double filter(double accel, double pwm, double dt);
+    void reset();
 };
