@@ -14,7 +14,7 @@ ICM20948_WE myIMU = ICM20948_WE(ICM20948_ADDR);
 bool dir = false;
 double V = 0;
 uint64_t timer = 0;
-const FilterType type = EXPONENT_SMOOTH;
+const FilterType type = KALMAN;
 
 void imuSetup(ICM20948_WE& imu)
 {
@@ -110,10 +110,10 @@ void loop()
     auto dt = micros() - timer;
     timer = micros();
 
-    V += filteredValue * dt * 9.8 / 1000;
-    distance += V * dt / 1000000;
+    // V += filteredValue * dt * 9.8 / 1000;
+    // distance += V * dt / 1000000;
 
-    static int targetDist = 3000;
+    static int targetDist = 1000;
 
     // модель скорости в форме синуса, период которого равен полной длинне заданаго пути
     double distToRad = PI * abs(distance / targetDist);
@@ -126,7 +126,8 @@ void loop()
             break;
 
         case KALMAN:
-            filteredValue = kalmanX.filter(gVal.y, speed - 100, dt);
+            int __dir = dir ? 1 : -1;
+            distance = kalmanX.filter(gVal.y, __dir * (speed - 100), dt / 1000);
             break;
 
         case AVRG:
@@ -170,19 +171,21 @@ void loop()
             resetValue();
     }
 
-    if (millis() - timeForPrint > 50)
+    if (millis() - timeForPrint > 100)
     {
-        Serial.print("accel - ");
-        Serial.print(gVal.y);
 
-        Serial.print("\tfilltered - ");
-        Serial.print(filteredValue);
+        // Serial.print("accel - ");
+        kalmanX.x.printTo(Serial);
+        Serial.println();
 
-        Serial.print("\tV - ");
-        Serial.print(V);
+        // Serial.print("\tfilltered - ");
+        // Serial.print(filteredValue);
 
-        Serial.print("\tDist - ");
-        Serial.print(distance);
+        // Serial.print("\tV - ");
+        // Serial.print(V);
+
+        // Serial.print("\tDist - ");
+        // Serial.println(distance);
 
         timeForPrint = millis();
     }

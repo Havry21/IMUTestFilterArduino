@@ -5,10 +5,9 @@ using namespace BLA;
 class KalmanFilter
 {
 private:
-    double Kp = 0.5;
-    double Kd = 0.5;
-    double Kspeed = 1;
-    Matrix<3, 1, double> x = {0, 0, 0};
+    const double Kp = 0.5;
+    const double Kd = 0.5;
+    const double Kspeed = 0.06977777777 * 24 / 1000;
     Matrix<3, 1, double> B = {0, 0, 1};
     Matrix<3, 3, double> P = Zeros<3, 3, double>();
 
@@ -29,9 +28,11 @@ private:
     const Matrix<1, 1, double> R = {1};
 
 public:
+    Matrix<3, 1, double> x = {0, 0, 0};
+
     KalmanFilter() = default;
     ~KalmanFilter() = default;
 
-    double filter(double accel, double pwm, double dt);
+    double filter(double accel, double pwm, double _dt);
     void reset();
 };
